@@ -80,4 +80,4 @@ Unauthorized use of these tools against systems without proper authorization may
 
 ---
 
-*Note: Some components may have additional documentation in their respective directories with more detailed usage instructions and examples.*# Binary Analysis and Security Research Toolkit
+*Note: Some components may have additional documentation in their respective directories with more detailed usage instructions and examples.*
