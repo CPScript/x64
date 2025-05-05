@@ -1,0 +1,68 @@
+# Makefile for HWInfo Linux Kernel Module
+#
+# Builds a kernel module for hardware inspection with direct register access.
+# Requires Linux kernel headers to be installed.
+#
+# Usage:
+#   make           - Build the kernel module
+#   make install   - Install the module (requires root)
+#   make load      - Load the module (requires root)
+#   make unload    - Unload the module (requires root)
+#   make clean     - Remove build artifacts
+
+obj-m += hwinfo.o
+hwinfo-objs := hwinfo_linux_module.o
+
+KERNELDIR ?= /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
+all:
+	@echo "Building HWInfo kernel module..."
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
+
+install:
+	@echo "Installing HWInfo kernel module..."
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules_install
+	depmod -a
+
+load:
+	@echo "Loading HWInfo kernel module..."
+	insmod hwinfo.ko
+
+unload:
+	@echo "Unloading HWInfo kernel module..."
+	rmmod hwinfo
+
+test: load
+	@echo "Module loaded. Testing functionality..."
+	@echo "CPU Info:" 
+	@cat /proc/hwinfo/cpu | head -20
+	@echo "----"
+	@echo "MSRs:"
+	@cat /proc/hwinfo/msrs | head -5
+	@echo "----"
+	@echo "Memory Map:"
+	@cat /proc/hwinfo/memory | head -5
+	@echo "----"
+	@echo "Testing complete. Unloading module..."
+	@rmmod hwinfo
+
+clean:
+	@echo "Cleaning build artifacts..."
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
+	
+rebuild: clean all
+
+help:
+	@echo "HWInfo Kernel Module Makefile"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  make           - Build the kernel module"
+	@echo "  make install   - Install the module (requires root)"
+	@echo "  make load      - Load the module (requires root)"
+	@echo "  make unload    - Unload the module (requires root)"
+	@echo "  make test      - Load and test basic functionality (requires root)"
+	@echo "  make clean     - Remove build artifacts"
+	@echo "  make rebuild   - Clean and rebuild module"
+
+.PHONY: all install load unload clean rebuild help test

@@ -1,0 +1,48 @@
+/* EFI Application Linker Script */
+
+OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64", "elf64-x86-64")
+OUTPUT_ARCH(i386:x86-64)
+ENTRY(_start)
+
+SECTIONS
+{
+    /* EFI applications must be loaded at any address */
+    . = 0;
+    
+    /* PE/COFF header for EFI applications */
+    .text : {
+        *(.text)
+        *(.text.*)
+        *(.gnu.linkonce.t.*)
+    }
+    
+    /* Read-only data section */
+    .rodata : {
+        *(.rodata)
+        *(.rodata.*)
+        *(.gnu.linkonce.r.*)
+    }
+    
+    /* Data sections */
+    .data : {
+        *(.data)
+        *(.data.*)
+        *(.gnu.linkonce.d.*)
+    }
+    
+    /* BSS (zero-initialized data) */
+    .bss : {
+        *(.bss)
+        *(.bss.*)
+        *(.gnu.linkonce.b.*)
+        *(COMMON)
+    }
+    
+    /* Discard sections that are not needed in the final image */
+    /DISCARD/ : {
+        *(.comment)
+        *(.note.*)
+        *(.eh_frame)
+        *(.debug_*)
+    }
+}
