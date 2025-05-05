@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymorphic Shellcode Encoder/Decoder Framework</title>
+    <style>
+        :root {
+            --primary-color: #0a192f;
+            --secondary-color: #172a45;
+            --accent-color: #64ffda;
+            --text-color: #e6f1ff;
+            --code-bg: #112240;
+            --warning-color: #ff5555;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            line-height: 1.6;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 0;
+            margin: 0;
+        }
+        
+        header {
+            background-color: var(--secondary-color);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 3px solid var(--accent-color);
+        }
+        
+        header h1 {
+            margin: 0;
+            color: var(--accent-color);
+            font-size: 2.5rem;
+        }
+        
+        header p {
+            margin-top: 0.5rem;
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        nav {
+            background-color: var(--secondary-color);
+            position: sticky;
+            top: 0;
+            padding: 1rem 2rem;
+            z-index: 100;
+            border-bottom: 1px solid var(--accent-color);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        nav ul li {
+            margin: 0 1rem;
+        }
+        
+        nav ul li a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        
+        nav ul li a:hover {
+            color: var(--accent-color);
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        section {
+            margin-bottom: 3rem;
+            padding-top: 1rem;
+        }
+        
+        h2 {
+            color: var(--accent-color);
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--accent-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            color: var(--accent-color);
+            margin: 1.5rem 0 1rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+        }
+        
+        code, pre {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background-color: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9rem;
+        }
+        
+        pre {
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        .alert {
+            background-color: var(--warning-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .feature-card {
+            background-color: var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-color);
+            transition: transform 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-card h4 {
+            color: var(--accent-color);
+            margin-bottom: 0.75rem;
+        }
+        
+        .command-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        
+        .command-table th, .command-table td {
+            text-align: left;
+            padding: 0.75rem;
+            border: 1px solid var(--secondary-color);
+        }
+        
+        .command-table th {
+            background-color: var(--secondary-color);
+            color: var(--accent-color);
+        }
+        
+        .command-table tr:nth-child(even) {
+            background-color: rgba(23, 42, 69, 0.3);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background-color: var(--secondary-color);
+            margin-top: 3rem;
+            border-top: 1px solid var(--accent-color);
+        }
+        
+        .workflow-diagram {
+            width: 100%;
+            margin: 2rem 0;
+            background-color: var(--secondary-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+        }
+        
+        .code-block-header {
+            background-color: rgba(100, 255, 218, 0.1);
+            padding: 0.5rem 1rem;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            margin-top: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-block-header + pre {
+            margin-top: 0;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+        
+        .terminal {
+            background-color: #000;
+            border-radius: 4px;
+            padding: 1rem;
+            color: #0f0;
+            margin: 1.5rem 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        
+        .terminal::before {
+            content: "$ ";
+            color: #0f0;
+        }
+        
+        .binary-visualization {
+            font-family: monospace;
+            background-color: var(--code-bg);
+            padding: 1rem;
+            overflow-x: auto;
+            white-space: pre;
+            margin: 1.5rem 0;
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                padding: 1.5rem;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            nav ul li {
+                margin: 0.25rem 0.5rem;
+            }
+            
+            main {
+                padding: 1.5rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Polymorphic Shellcode Encoder/Decoder Framework</h1>
+        <p>Advanced obfuscation and anti-detection toolkit for security research and development</p>
+    </header>
+    
+    <nav>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#installation">Installation</a></li>
+            <li><a href="#usage">Usage</a></li>
+            <li><a href="#examples">Examples</a></li>
+            <li><a href="#security">Security</a></li>
+        </ul>
+    </nav>
+    
+    <main>
+        <section id="overview">
+            <h2>Overview</h2>
+            <p>The Polymorphic Shellcode Encoder/Decoder Framework is an enterprise-grade security research tool designed to transform standard shellcode into polymorphic variants that evade signature-based detection mechanisms. By implementing advanced encoding techniques and self-modifying code patterns, the framework provides robust protection against static analysis while maintaining reliable execution characteristics.</p>
+            
+            <div class="alert">
+                <strong>IMPORTANT:</strong> This tool is intended for security research, education, and legitimate penetration testing only. Always obtain proper authorization before using in any environment.
+            </div>
+            
+            <p>Polymorphic shellcode works by wrapping the original payload in a mutating decoder stub that:</p>
+            <ul>
+                <li>Uses multiple layers of encoding with variable keys</li>
+                <li>Incorporates randomized junk instructions</li>
+                <li>Implements position-independent self-modifying code</li>
+                <li>Dynamically decodes the original payload at runtime</li>
+            </ul>
+        </section>
+        
+        <section id="features">
+            <h2>Key Features</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Multi-Layer Encoding</h4>
+                    <p>Combines XOR, ROL (rotate left), and ADD operations with randomized keys for maximum signature diversity.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>Polymorphic Code Generation</h4>
+                    <p>Each encoding produces a unique decoder stub with variable instruction sequences and random junk instructions.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>Self-Modifying Decoder</h4>
+                    <p>Runtime decoding that modifies encoded shellcode in-place to reveal the original payload only during execution.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>Position-Independent Execution</h4>
+                    <p>Uses call/pop technique for self-referencing, enabling execution from any memory location.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>Integrated Testing Capabilities</h4>
+                    <p>Built-in functionality to validate encoded payloads in a controlled execution environment.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>Extensible Architecture</h4>
+                    <p>Modular design supporting custom encoding layers and stub generation techniques.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section id="architecture">
+            <h2>Architecture</h2>
+            
+            <h3>Encoding Process</h3>
+            <p>The framework implements a multi-layered encoding approach:</p>
+            
+            <div class="workflow-diagram">
+                <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Original Shellcode -->
+                    <rect x="50" y="75" width="120" height="50" rx="5" fill="#172a45" stroke="#64ffda" stroke-width="2"/>
+                    <text x="110" y="105" text-anchor="middle" fill="#e6f1ff" font-size="14">Original Shellcode</text>
+                    
+                    <!-- ADD Layer -->
+                    <rect x="240" y="75" width="100" height="50" rx="5" fill="#172a45" stroke="#64ffda" stroke-width="2"/>
+                    <text x="290" y="105" text-anchor="middle" fill="#e6f1ff" font-size="14">ADD Layer</text>
+                    
+                    <!-- ROL Layer -->
+                    <rect x="410" y="75" width="100" height="50" rx="5" fill="#172a45" stroke="#64ffda" stroke-width="2"/>
+                    <text x="460" y="105" text-anchor="middle" fill="#e6f1ff" font-size="14">ROL Layer</text>
+                    
+                    <!-- XOR Layer -->
+                    <rect x="580" y="75" width="100" height="50" rx="5" fill="#172a45" stroke="#64ffda" stroke-width="2"/>
+                    <text x="630" y="105" text-anchor="middle" fill="#e6f1ff" font-size="14">XOR Layer</text>
+                    
+                    <!-- Key Boxes -->
+                    <rect x="240" y="145" width="100" height="30" rx="5" fill="#112240" stroke="#64ffda" stroke-width="1"/>
+                    <text x="290" y="165" text-anchor="middle" fill="#e6f1ff" font-size="12">ADD Key (1-255)</text>
+                    
+                    <rect x="410" y="145" width="100" height="30" rx="5" fill="#112240" stroke="#64ffda" stroke-width="1"/>
+                    <text x="460" y="165" text-anchor="middle" fill="#e6f1ff" font-size="12">ROL Key (1-7)</text>
+                    
+                    <rect x="580" y="145" width="100" height="30" rx="5" fill="#112240" stroke="#64ffda" stroke-width="1"/>
+                    <text x="630" y="165" text-anchor="middle" fill="#e6f1ff" font-size="12">XOR Key (1-255)</text>
+                    
+                    <!-- Arrows -->
+                    <path d="M170 100 H220 L240 100" fill="none" stroke="#64ffda" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <path d="M340 100 H390 L410 100" fill="none" stroke="#64ffda" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <path d="M510 100 H560 L580 100" fill="none" stroke="#64ffda" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <path d="M680 100 H700" fill="none" stroke="#64ffda" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    
+                    <path d="M290 145 V125" fill="none" stroke="#64ffda" stroke-width="1" stroke-dasharray="4" marker-end="url(#arrowhead)"/>
+                    <path d="M460 145 V125" fill="none" stroke="#64ffda" stroke-width="1" stroke-dasharray="4" marker-end="url(#arrowhead)"/>
+                    <path d="M630 145 V125" fill="none" stroke="#64ffda" stroke-width="1" stroke-dasharray="4" marker-end="url(#arrowhead)"/>
+                    
+                    <!-- Arrowhead Marker -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#64ffda"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+            
+            <h3>Memory Layout</h3>
+            <p>The encoded payload has a specialized memory structure with metadata and the encoded shellcode:</p>
+            
+            <div class="binary-visualization">
+┌────────────────────────────┬────────────────────┬──────────────────────────────────────────────┐
+│      Decoder Stub          │     Metadata       │               Encoded Shellcode               │
+├────────────────────────────┼────────────────────┼──────────────────────────────────────────────┤
+│ Self-modifying ASM code    │ Byte 0: Length     │                                              │
+│ with polymorphic           │ Byte 1: XOR Key    │ Multi-layer encoded payload                  │
+│ characteristics            │ Byte 2: ROL Key    │ (XOR + ROL + ADD)                            │
+│                            │ Byte 3: ADD Key    │                                              │
+│                            │ Bytes 4-7: Reserved│                                              │
+└────────────────────────────┴────────────────────┴──────────────────────────────────────────────┘
+</div>
+            
+            <h3>Decoder Execution Flow</h3>
+            <p>The x64 assembly decoder stub uses an indirect call/pop technique to achieve position-independent execution:</p>
+            
+            <ol>
+                <li>Jump to shellcode address getter</li>
+                <li>Call decoder stub (pushing return address on stack)</li>
+                <li>Pop address into register (RSI)</li>
+                <li>Load metadata (length and keys)</li>
+                <li>Decode shellcode byte-by-byte with multiple layers</li>
+                <li>Execute decoded shellcode</li>
+            </ol>
+        </section>
+        
+        <section id="installation">
+            <h2>Installation</h2>
+            
+            <h3>Requirements</h3>
+            <ul>
+                <li>Python 3.6+</li>
+                <li>NASM assembler (for custom stub manipulation)</li>
+                <li>GCC compiler (for testing)</li>
+            </ul>
+            
+            <h3>Setup</h3>
+            <p>The framework is self-contained in a single Python file. Download and make it executable:</p>
+            
+            <div class="terminal">
+wget https://example.com/poly_encoder.py
+chmod +x poly_encoder.py
+</div>
+
+            <p>To verify installation:</p>
+            
+            <div class="terminal">
+./poly_encoder.py --help
+</div>
+        </section>
+        
+        <section id="usage">
+            <h2>Usage</h2>
+            
+            <h3>Command Reference</h3>
+            <p>The framework provides several commands for different operations:</p>
+            
+            <table class="command-table">
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>Description</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>encode</code></td>
+                        <td>Encode shellcode with polymorphic techniques</td>
+                        <td><code>./poly_encoder.py encode -i input.bin -o output.bin</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>test</code></td>
+                        <td>Test encoded shellcode execution</td>
+                        <td><code>./poly_encoder.py test -i encoded.bin</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>extract-stub</code></td>
+                        <td>Extract decoder stub template</td>
+                        <td><code>./poly_encoder.py extract-stub -o decoder_stub.asm</code></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>Encoding Options</h3>
+            <p>The <code>encode</code> command supports several options:</p>
+            
+            <table class="command-table">
+                <thead>
+                    <tr>
+                        <th>Option</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>-i, --input FILE</code></td>
+                        <td>Input shellcode file (raw binary)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-x, --hex STRING</code></td>
+                        <td>Shellcode as hex string</td>
+                    </tr>
+                    <tr>
+                        <td><code>-o, --output FILE</code></td>
+                        <td>Output file for encoded shellcode</td>
+                    </tr>
+                    <tr>
+                        <td><code>--xor-key VALUE</code></td>
+                        <td>Specific XOR key (1-255)</td>
+                    </tr>
+                    <tr>
+                        <td><code>--rol-key VALUE</code></td>
+                        <td>Specific ROL key (1-7)</td>
+                    </tr>
+                    <tr>
+                        <td><code>--add-key VALUE</code></td>
+                        <td>Specific ADD key (1-255)</td>
+                    </tr>
+                    <tr>
+                        <td><code>--junk-probability VALUE</code></td>
+                        <td>Probability of inserting junk instructions (0.0-1.0)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-v, --verbose</code></td>
+                        <td>Enable verbose output</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <section id="examples">
+            <h2>Usage Examples</h2>
+            
+            <h3>Basic Encoding</h3>
+            
+            <div class="code-block-header">
+                <span>Encode a raw binary shellcode file</span>
+            </div>
+            <pre><code>./poly_encoder.py encode -i shellcode.bin -o encoded.bin</code></pre>
+            
+            <div class="code-block-header">
+                <span>Encode shellcode from a hex string</span>
+            </div>
+            <pre><code>./poly_encoder.py encode -x "48 31 c0 50 48 89 e6 48 89 e2 48 8d 3c 02" -o encoded.bin</code></pre>
+            
+            <h3>Advanced Encoding</h3>
+            
+            <div class="code-block-header">
+                <span>Use custom keys for deterministic encoding</span>
+            </div>
+            <pre><code>./poly_encoder.py encode -i shellcode.bin -o encoded.bin --xor-key 42 --rol-key 3 --add-key 7</code></pre>
+            
+            <div class="code-block-header">
+                <span>Maximize polymorphic characteristics with high junk probability</span>
+            </div>
+            <pre><code>./poly_encoder.py encode -i shellcode.bin -o encoded.bin --junk-probability 0.6 -v</code></pre>
+            
+            <h3>Testing</h3>
+            
+            <div class="code-block-header">
+                <span>Test encoded shellcode</span>
+            </div>
+            <pre><code>./poly_encoder.py test -i encoded.bin</code></pre>
+            
+            <h3>Advanced Usage</h3>
+            
+            <div class="code-block-header">
+                <span>Extract and customize decoder stub</span>
+            </div>
+            <pre><code># Extract stub template
+./poly_encoder.py extract-stub -o custom_decoder.asm
+
+# Edit custom_decoder.asm with your modifications
+
+# Assemble custom stub
+nasm -f bin -o custom_stub.bin custom_decoder.asm
+
+# Use custom stub in encoder (advanced usage)
+python3 -c "
+from poly_encoder import PolymorphicEncoderFramework
+with open('shellcode.bin', 'rb') as f:
+    shellcode = f.read()
+with open('custom_stub.bin', 'rb') as f:
+    custom_stub = f.read()
+framework = PolymorphicEncoderFramework()
+payload = framework.generate_payload(shellcode, stub=custom_stub)
+with open('custom_encoded.bin', 'wb') as f:
+    f.write(payload)
+print(f'Generated {len(payload)} byte custom payload')
+"</code></pre>
+        </section>
+        
+        <section id="security">
+            <h2>Security Considerations</h2>
+            
+            <p>While the framework provides robust obfuscation techniques for evading signature-based detection, several important security considerations should be noted:</p>
+            
+            <div class="alert">
+                <strong>LEGAL DISCLAIMER:</strong> This tool is provided for research and authorized security testing only. Unauthorized use may violate local laws. Always obtain proper permission before testing.
+            </div>
+            
+            <h3>Limitations</h3>
+            <ul>
+                <li><strong>Behavioral Detection:</strong> The framework focuses on signature evasion but doesn't protect against behavioral analysis.</li>
+                <li><strong>Heuristic Analysis:</strong> Advanced security solutions may flag the decoder stub based on heuristic patterns.</li>
+                <li><strong>Size Increase:</strong> Polymorphic encoding increases payload size by approximately 2-3x.</li>
+                <li><strong>Length Limitation:</strong> Current implementation supports shellcode up to 255 bytes (expandable with minimal modifications).</li>
+            </ul>
+            
+            <h3>Best Practices</h3>
+            <ul>
+                <li>Regularly regenerate encodings for maximum polymorphic diversity</li>
+                <li>Combine with other evasion techniques for comprehensive protection</li>
+                <li>Test in isolated environments before deployment</li>
+                <li>Avoid using predictable keys or patterns</li>
+            </ul>
+        </section>
+    </main>
+    
+    <footer>
+        <p>Polymorphic Shellcode Encoder/Decoder Framework — For Security Research and Education</p>
+    </footer>
+</body>
+</html>
