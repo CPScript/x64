@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROP Chain Generator Framework - Enterprise Exploitation Architecture</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #131a24;
+            --text-primary: #d3dbe3;
+            --text-secondary: #8c94a3;
+            --accent-primary: #5ccfe6;
+            --accent-secondary: #ff3333;
+            --accent-tertiary: #c594c5;
+            --terminal-green: #85c075;
+            --code-bg: #161f2b;
+            --header-height: 60px;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: var(--header-height) 1fr;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-areas:
+                "header header"
+                "sidebar main";
+            overflow-x: hidden;
+        }
+
+        header {
+            grid-area: header;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--accent-primary);
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            position: fixed;
+            width: 100%;
+            height: var(--header-height);
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-primary);
+            margin-right: auto;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo span {
+            color: var(--accent-secondary);
+        }
+
+        .logo::before {
+            content: ">";
+            margin-right: 8px;
+            color: var(--terminal-green);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            margin-left: 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: color 0.3s;
+            outline: none;
+        }
+
+        nav button:hover {
+            color: var(--accent-primary);
+        }
+
+        .active-nav {
+            color: var(--accent-primary);
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 3px;
+        }
+
+        aside {
+            grid-area: sidebar;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid rgba(92, 207, 230, 0.2);
+            padding: 2rem 1rem;
+            overflow-y: auto;
+            position: fixed;
+            height: calc(100vh - var(--header-height));
+            width: var(--sidebar-width);
+            top: var(--header-height);
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-section h3 {
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(92, 207, 230, 0.3);
+            padding-bottom: 0.5rem;
+        }
+
+        .sidebar-section ul {
+            list-style: none;
+        }
+
+        .sidebar-section li {
+            margin-bottom: 0.75rem;
+        }
+
+        .sidebar-section a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .sidebar-section a:hover {
+            background-color: rgba(92, 207, 230, 0.1);
+            color: var(--accent-primary);
+            transform: translateX(5px);
+        }
+
+        .sidebar-section a.active {
+            background-color: rgba(92, 207, 230, 0.15);
+            color: var(--accent-primary);
+            border-left: 3px solid var(--accent-primary);
+            padding-left: 0.7rem;
+        }
+
+        main {
+            grid-area: main;
+            padding: 2rem;
+            margin-top: var(--header-height);
+            margin-left: var(--sidebar-width);
+            overflow-y: auto;
+            height: calc(100vh - var(--header-height));
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, var(--accent-primary), transparent);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin: 1.5rem 0 1rem;
+            color: var(--accent-tertiary);
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::before {
+            content: "#";
+            color: var(--accent-secondary);
+            margin-right: 0.5rem;
+            opacity: 0.7;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin: 1.2rem 0 0.8rem;
+            color: var(--accent-primary);
+        }
+
+        p {
+            margin-bottom: 1.2rem;
+            line-height: 1.6;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            background-color: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            color: var(--accent-primary);
+            font-size: 0.9rem;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 1.2rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 3px solid var(--accent-primary);
+            margin: 1.5rem 0;
+            position: relative;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            display: block;
+        }
+
+        pre::before {
+            content: attr(data-language);
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            padding: 0.3rem 0.6rem;
+            font-size: 0.7rem;
+            border-radius: 0 5px 0 5px;
+            text-transform: uppercase;
+        }
+
+        .code-block {
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(92, 207, 230, 0.2);
+            border: none;
+            color: var(--text-primary);
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+
+        .memory-diagram {
+            background-color: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 5px;
+            border: 1px solid rgba(92, 207, 230, 0.3);
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        .memory-block {
+            display: flex;
+            margin-bottom: 0.5rem;
+        }
+
+        .memory-address {
+            width: 150px;
+            color: var(--accent-tertiary);
+            font-family: 'Courier New', monospace;
+            padding-right: 1rem;
+            text-align: right;
+        }
+
+        .memory-content {
+            flex: 1;
+            color: var(--terminal-green);
+            font-family: 'Courier New', monospace;
+        }
+
+        .memory-annotation {
+            margin-left: 1rem;
+            color: var(--accent-secondary);
+            font-style: italic;
+        }
+
+        .gadget {
+            display: flex;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 3px;
+            background-color: rgba(92, 207, 230, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .gadget:hover {
+            background-color: rgba(92, 207, 230, 0.2);
+            transform: translateX(5px);
+        }
+
+        .gadget-address {
+            width: 120px;
+            color: var(--accent-tertiary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .gadget-instruction {
+            flex: 1;
+            color: var(--terminal-green);
+            font-family: 'Courier New', monospace;
+        }
+
+        .terminal {
+            background-color: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid var(--accent-primary);
+            margin: 1.5rem 0;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+
+        .terminal-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 25px;
+            background-color: var(--accent-primary);
+            border-radius: 5px 5px 0 0;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+        }
+
+        .terminal-title {
+            color: var(--bg-primary);
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+
+        .terminal-dots {
+            display: flex;
+            margin-right: auto;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .dot-red {
+            background-color: var(--accent-secondary);
+        }
+
+        .dot-yellow {
+            background-color: #ffcc00;
+        }
+
+        .dot-green {
+            background-color: var(--terminal-green);
+        }
+
+        .terminal-content {
+            margin-top: 25px;
+            padding-top: 1rem;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .terminal-prompt::before {
+            content: "$ ";
+            color: var(--terminal-green);
+        }
+
+        .terminal-output {
+            color: var(--text-primary);
+            margin-left: 1rem;
+        }
+
+        .info-box {
+            background-color: rgba(92, 207, 230, 0.1);
+            border-left: 3px solid var(--accent-primary);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 5px 5px 0;
+            position: relative;
+        }
+
+        .info-box::before {
+            content: "INFO";
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            padding: 0.3rem 0.6rem;
+            font-size: 0.7rem;
+            position: absolute;
+            top: 0;
+            right: 0;
+            border-radius: 0 5px 0 5px;
+        }
+
+        .warning-box {
+            background-color: rgba(255, 51, 51, 0.1);
+            border-left: 3px solid var(--accent-secondary);
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 5px 5px 0;
+            position: relative;
+        }
+
+        .warning-box::before {
+            content: "WARNING";
+            background-color: var(--accent-secondary);
+            color: var(--bg-primary);
+            padding: 0.3rem 0.6rem;
+            font-size: 0.7rem;
+            position: absolute;
+            top: 0;
+            right: 0;
+            border-radius: 0 5px 0 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background-color: var(--bg-secondary);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(92, 207, 230, 0.2);
+        }
+
+        th {
+            background-color: rgba(92, 207, 230, 0.1);
+            color: var(--accent-primary);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background-color: rgba(92, 207, 230, 0.05);
+        }
+
+        .rop-vis-container {
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        .rop-vis {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rop-vis-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .rop-vis-row::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            width: 2px;
+            height: 1rem;
+            background-color: var(--accent-primary);
+            transform: translateX(-50%);
+        }
+
+        .rop-vis-row:last-child::after {
+            display: none;
+        }
+
+        .rop-addr {
+            width: 150px;
+            text-align: right;
+            padding-right: 1rem;
+            color: var(--accent-tertiary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .rop-box {
+            width: 250px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 5px;
+            padding: 0.8rem;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+
+        .rop-box.gadget {
+            border-color: var(--terminal-green);
+        }
+
+        .rop-box.param {
+            border-color: var(--accent-tertiary);
+            background-color: rgba(197, 148, 197, 0.1);
+        }
+
+        .rop-annotation {
+            margin-left: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .search-container {
+            margin: 2rem 0;
+            display: flex;
+        }
+
+        .search-input {
+            flex: 1;
+            background-color: var(--bg-secondary);
+            border: 1px solid rgba(92, 207, 230, 0.3);
+            border-radius: 5px 0 0 5px;
+            padding: 0.8rem 1rem;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            outline: none;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .search-btn {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 0 5px 5px 0;
+            padding: 0 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .search-btn:hover {
+            background-color: var(--accent-tertiary);
+        }
+
+        .command-box {
+            display: flex;
+            background-color: var(--bg-secondary);
+            border-radius: 5px;
+            padding: 0.8rem;
+            margin: 1rem 0;
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .command {
+            color: var(--accent-primary);
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .command-desc {
+            color: var(--text-secondary);
+        }
+
+        .footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(92, 207, 230, 0.2);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Interactive ROP Builder */
+        .interactive-builder {
+            background-color: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 1px solid rgba(92, 207, 230, 0.3);
+        }
+
+        .builder-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .builder-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--accent-primary);
+            margin-right: auto;
+        }
+
+        .builder-controls {
+            display: flex;
+        }
+
+        .builder-btn {
+            background-color: rgba(92, 207, 230, 0.2);
+            border: none;
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            margin-left: 0.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .builder-btn:hover {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+
+        .builder-btn.primary {
+            background-color: var(--accent-primary);
+            color: var(--bg-primary);
+        }
+
+        .builder-btn.primary:hover {
+            background-color: var(--accent-tertiary);
+        }
+
+        .builder-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .builder-section-title {
+            font-size: 1.1rem;
+            color: var(--accent-tertiary);
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .builder-section-title::before {
+            content: ">";
+            color: var(--terminal-green);
+            margin-right: 0.5rem;
+        }
+
+        .builder-input {
+            width: 100%;
+            background-color: var(--bg-primary);
+            border: 1px solid rgba(92, 207, 230, 0.2);
+            border-radius: 5px;
+            padding: 0.8rem;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            margin-bottom: 0.5rem;
+        }
+
+        .builder-input:focus {
+            border-color: var(--accent-primary);
+            outline: none;
+        }
+
+        .builder-gadgets {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: var(--bg-primary);
+            border: 1px solid rgba(92, 207, 230, 0.2);
+            border-radius: 5px;
+            padding: 0.5rem;
+        }
+
+        .builder-chain {
+            background-color: var(--bg-primary);
+            border: 1px solid rgba(92, 207, 230, 0.2);
+            border-radius: 5px;
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .chain-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 3px;
+            margin-bottom: 0.5rem;
+            background-color: rgba(92, 207, 230, 0.05);
+        }
+
+        .chain-addr {
+            width: 120px;
+            color: var(--accent-tertiary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .chain-content {
+            flex: 1;
+            color: var(--terminal-green);
+            font-family: 'Courier New', monospace;
+        }
+
+        .chain-type {
+            margin-left: 0.5rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .chain-type.gadget {
+            background-color: rgba(133, 192, 117, 0.2);
+            color: var(--terminal-green);
+        }
+
+        .chain-type.param {
+            background-color: rgba(197, 148, 197, 0.2);
+            color: var(--accent-tertiary);
+        }
+
+        .chain-type.addr {
+            background-color: rgba(92, 207, 230, 0.2);
+            color: var(--accent-primary);
+        }
+
+        .chain-remove {
+            margin-left: 0.5rem;
+            background: none;
+            border: none;
+            color: var(--accent-secondary);
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .chain-remove:hover {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            :root {
+                --sidebar-width: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                grid-template-rows: var(--header-height) auto 1fr;
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "sidebar"
+                    "main";
+            }
+
+            header {
+                padding: 0 1rem;
+            }
+
+            aside {
+                position: static;
+                height: auto;
+                width: 100%;
+                padding: 1rem;
+                border-right: none;
+                border-bottom: 1px solid rgba(92, 207, 230, 0.2);
+            }
+
+            main {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+
+            .sidebar-section {
+                margin-bottom: 1rem;
+            }
+
+            nav button {
+                margin-left: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">ROP<span>Chain</span>Gen</div>
+        <nav>
+            <button class="active-nav">Framework</button>
+            <button>Tutorial</button>
+            <button>Reference</button>
+            <button>Examples</button>
+        </nav>
+    </header>
+
+    <aside>
+        <div class="sidebar-section">
+            <h3>Core Concepts</h3>
+            <ul>
+                <li><a href="#introduction" class="active">Introduction</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#memory-layout">Memory Layout</a></li>
+                <li><a href="#gadget-discovery">Gadget Discovery</a></li>
+                <li><a href="#chain-construction">Chain Construction</a></li>
+            </ul>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>Framework Components</h3>
+            <ul>
+                <li><a href="#ropgadget">ROPGadget</a></li>
+                <li><a href="#ropchain">ROPChain</a></li>
+                <li><a href="#ropchainGenerator">ROPChainGenerator</a></li>
+                <li><a href="#interactive-builder">Interactive Builder</a></li>
+            </ul>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>Advanced Topics</h3>
+            <ul>
+                <li><a href="#exploitation-patterns">Exploitation Patterns</a></li>
+                <li><a href="#syscall-chains">Syscall Chains</a></li>
+                <li><a href="#libc-manipulation">Libc Manipulation</a></li>
+                <li><a href="#stack-pivoting">Stack Pivoting</a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <main>
+        <section id="introduction">
+            <h1>ROP Chain Generator Framework</h1>
+            <p>The Return-Oriented Programming (ROP) Chain Generator is an enterprise-grade exploitation framework designed for security researchers and penetration testers to construct precision ROP chains capable of bypassing modern security mitigations including Data Execution Prevention (DEP) and non-executable stacks (NX) on x64 architectures.</p>
+
+            <div class="info-box">
+                <p>This framework is intended for legitimate security research, vulnerability assessment, and educational purposes only. Ensure proper authorization before performing any security testing.</p>
+            </div>
+
+            <h2>Core Capabilities</h2>
+            <p>The framework provides comprehensive capabilities for binary analysis, gadget extraction, and payload construction:</p>
+
+            <ul>
+                <li>Automated binary analysis and gadget extraction</li>
+                <li>Intelligent gadget classification and indexing</li>
+                <li>Stack manipulation and register control primitives</li>
+                <li>Syscall chain construction for privilege escalation</li>
+                <li>Interactive chain builder with visualization</li>
+            </ul>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-yellow"></div>
+                        <div class="dot dot-green"></div>
+                    </div>
+                    <div class="terminal-title">Terminal</div>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">python rop_chain_generator.py -h</div>
+                    <div class="terminal-output">
+ROP Chain Generator Framework
+
+usage: rop_chain_generator.py [-h] [-o OUTPUT] [-m MAX_SIZE] [-i] [-s SEARCH] [--stats] binary
+
+positional arguments:
+  binary                Path to the binary file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o, --output          Output file for gadgets list
+  -m, --max-size        Maximum gadget size (instructions)
+  -i, --interactive     Start interactive mode
+  -s, --search          Search for gadgets matching pattern
+  --stats               Print gadget statistics
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture">
+            <h2>System Architecture</h2>
+            <p>The framework implements a layered architecture with specialized components for each stage of the exploitation process:</p>
+
+            <h3>Core Components</h3>
+            <div class="memory-diagram">
+                <div class="memory-block">
+                    <div class="memory-address">ROPGadget</div>
+                    <div class="memory-content">Encapsulates individual code sequences with memory analysis</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">ROPChain</div>
+                    <div class="memory-content">Manages chain construction and payload generation</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">ROPChainGenerator</div>
+                    <div class="memory-content">Handles binary analysis and gadget extraction</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">InteractiveROPBuilder</div>
+                    <div class="memory-content">Provides command interface for chain construction</div>
+                </div>
+            </div>
+
+            <h3>Data Flow Architecture</h3>
+            <p>The framework follows a structured data flow for ROP chain construction:</p>
+
+            <ol>
+                <li><strong>Binary Loading</strong> - Parse ELF structures and map memory sections</li>
+                <li><strong>Gadget Discovery</strong> - Identify useful instruction sequences within executable regions</li>
+                <li><strong>Gadget Analysis</strong> - Classify gadgets by instruction type and register manipulation</li>
+                <li><strong>Chain Construction</strong> - Select and sequence gadgets for target exploitation</li>
+                <li><strong>Payload Generation</strong> - Produce binary payload for delivery</li>
+            </ol>
+        </section>
+
+        <section id="memory-layout">
+            <h2>Memory Layout Manipulation</h2>
+            <p>Effective ROP chain construction requires precise understanding of memory layout and stack manipulation.</p>
+
+            <h3>Stack Structure</h3>
+            <p>A properly constructed ROP chain manipulates the stack to control execution flow:</p>
+
+            <div class="rop-vis-container">
+                <div class="rop-vis">
+                    <div class="rop-vis-row">
+                        <div class="rop-addr">0x7fffffffd508</div>
+                        <div class="rop-box gadget">pop rdi ; ret</div>
+                        <div class="rop-annotation">Control $rdi register</div>
+                    </div>
+                    <div class="rop-vis-row">
+                        <div class="rop-addr">0x7fffffffd510</div>
+                        <div class="rop-box param">/bin/sh\x00 address</div>
+                        <div class="rop-annotation">Parameter for $rdi</div>
+                    </div>
+                    <div class="rop-vis-row">
+                        <div class="rop-addr">0x7fffffffd518</div>
+                        <div class="rop-box gadget">pop rsi ; ret</div>
+                        <div class="rop-annotation">Control $rsi register</div>
+                    </div>
+                    <div class="rop-vis-row">
+                        <div class="rop-addr">0x7fffffffd520</div>
+                        <div class="rop-box param">0x0 (NULL)</div>
+                        <div class="rop-annotation">Parameter for $rsi</div>
+                    </div>
+                    <div class="rop-vis-row">
+                        <div class="rop-addr">0x7fffffffd528</div>
+                        <div class="rop-box gadget">pop rdx ; ret</div>
+                        <div class="rop-annotation">Control $rdx register</div>
+                    </div>
+                    <div class="rop-vis-row">
+                        <div class="rop-addr">0x7fffffffd530</div>
+                        <div class="rop-box param">0x0 (NULL)</div>
+                        <div class="rop-annotation">Parameter for $rdx</div>
+                    </div>
+                    <div class="rop-vis-row">
+                        <div class="rop-addr">0x7fffffffd538</div>
+                        <div class="rop-box gadget">pop rax ; ret</div>
+                        <div class="rop-annotation">Control $rax register</div>
+                    </div>
+                    <div class="rop-vis-row">
+                        <div class="rop-addr">0x7fffffffd540</div>
+                        <div class="rop-box param">0x3b (59 - execve)</div>
+                        <div class="rop-annotation">Parameter for $rax</div>
+                    </div>
+                    <div class="rop-vis-row">
+                        <div class="rop-addr">0x7fffffffd548</div>
+                        <div class="rop-box gadget">syscall</div>
+                        <div class="rop-annotation">Execute syscall with prepared registers</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="memory-diagram">
+                <div class="memory-block">
+                    <div class="memory-address">Memory Section</div>
+                    <div class="memory-content">Description</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">.text</div>
+                    <div class="memory-content">Contains executable code; primary source of gadgets</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">.plt</div>
+                    <div class="memory-content">Procedure linkage table; useful function call gadgets</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">.data</div>
+                    <div class="memory-content">Writable data section; useful for storing strings</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">.bss</div>
+                    <div class="memory-content">Uninitialized data; good target for larger data</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="gadget-discovery">
+            <h2>Gadget Discovery and Analysis</h2>
+            <p>Effective ROP chain construction depends on identifying useful instruction sequences that end with a <code>ret</code> instruction.</p>
+
+            <div class="info-box">
+                <p>The framework employs advanced disassembly techniques using Capstone Engine to identify all usable gadgets within the binary.</p>
+            </div>
+
+            <h3>Common Gadget Types</h3>
+            <p>Certain gadget patterns are particularly valuable for ROP chain construction:</p>
+
+            <div class="gadget">
+                <div class="gadget-address">0x40123a:</div>
+                <div class="gadget-instruction">pop rdi ; ret</div>
+            </div>
+            <div class="gadget">
+                <div class="gadget-address">0x40124b:</div>
+                <div class="gadget-instruction">pop rsi ; pop r15 ; ret</div>
+            </div>
+            <div class="gadget">
+                <div class="gadget-address">0x40125c:</div>
+                <div class="gadget-instruction">pop rdx ; ret</div>
+            </div>
+            <div class="gadget">
+                <div class="gadget-address">0x40126d:</div>
+                <div class="gadget-instruction">pop rax ; ret</div>
+            </div>
+            <div class="gadget">
+                <div class="gadget-address">0x40127e:</div>
+                <div class="gadget-instruction">syscall ; ret</div>
+            </div>
+            <div class="gadget">
+                <div class="gadget-address">0x40128f:</div>
+                <div class="gadget-instruction">mov qword ptr [rdi], rsi ; ret</div>
+            </div>
+
+            <h3>Gadget Classification</h3>
+            <p>The framework categorizes gadgets by their functionality and the registers they manipulate:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Register Control</td>
+                        <td>Populates a register with a value</td>
+                        <td>pop rax ; ret</td>
+                    </tr>
+                    <tr>
+                        <td>Memory Operations</td>
+                        <td>Reads from or writes to memory</td>
+                        <td>mov rax, [rdi] ; ret</td>
+                    </tr>
+                    <tr>
+                        <td>Arithmetic</td>
+                        <td>Performs calculations</td>
+                        <td>add rax, rdx ; ret</td>
+                    </tr>
+                    <tr>
+                        <td>System Interface</td>
+                        <td>Interacts with OS or CPU</td>
+                        <td>syscall ; ret</td>
+                    </tr>
+                    <tr>
+                        <td>Stack Manipulation</td>
+                        <td>Adjusts stack pointer</td>
+                        <td>add rsp, 0x10 ; ret</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search for gadgets (e.g., 'pop rdi')">
+                <button class="search-btn">Search</button>
+            </div>
+        </section>
+
+        <section id="chain-construction">
+            <h2>Chain Construction</h2>
+            <p>Constructing an effective ROP chain requires careful selection and sequencing of gadgets to achieve desired control flow.</p>
+
+            <div class="warning-box">
+                <p>ROP chain construction requires detailed knowledge of the target binary and architecture. Always validate chains in a controlled environment before deployment.</p>
+            </div>
+
+            <h3>Chain Construction Process</h3>
+            <ol>
+                <li><strong>Define Objective</strong> - Determine exploitation goal (e.g., spawning a shell)</li>
+                <li><strong>Identify Requirements</strong> - Determine necessary register values and system calls</li>
+                <li><strong>Select Gadgets</strong> - Find gadgets that can set required register values</li>
+                <li><strong>Sequence Construction</strong> - Order gadgets to achieve desired control flow</li>
+                <li><strong>Payload Generation</strong> - Convert chain to binary payload</li>
+                <li><strong>Validation</strong> - Test chain to confirm expected behavior</li>
+            </ol>
+
+            <h3>Command Interface</h3>
+            <p>The interactive builder provides a command interface for chain construction:</p>
+
+            <div class="command-box">
+                <div class="command">search &lt;pattern&gt;</div>
+                <div class="command-desc">Search for gadgets matching pattern</div>
+            </div>
+            <div class="command-box">
+                <div class="command">add &lt;index&gt; [params...]</div>
+                <div class="command-desc">Add gadget from last search with optional parameters</div>
+            </div>
+            <div class="command-box">
+                <div class="command">addr &lt;address&gt;</div>
+                <div class="command-desc">Add raw address to chain</div>
+            </div>
+            <div class="command-box">
+                <div class="command">data "&lt;string&gt;" or &lt;hex&gt;</div>
+                <div class="command-desc">Add data to chain (string or hex)</div>
+            </div>
+            <div class="command-box">
+                <div class="command">print / show</div>
+                <div class="command-desc">Show current ROP chain</div>
+            </div>
+            <div class="command-box">
+                <div class="command">generate &lt;filename&gt;</div>
+                <div class="command-desc">Generate payload and save to file</div>
+            </div>
+            <div class="command-box">
+                <div class="command">suggest execve [command]</div>
+                <div class="command-desc">Suggest ROP chain for execve syscall</div>
+            </div>
+        </section>
+
+        <section id="interactive-builder">
+            <h2>Interactive ROP Builder</h2>
+            <p>Construct and visualize ROP chains in real-time using the interactive builder interface.</p>
+
+            <div class="interactive-builder">
+                <div class="builder-header">
+                    <div class="builder-title">ROP Chain Builder</div>
+                    <div class="builder-controls">
+                        <button class="builder-btn">Clear</button>
+                        <button class="builder-btn primary">Generate</button>
+                    </div>
+                </div>
+
+                <div class="builder-section">
+                    <div class="builder-section-title">Gadget Search</div>
+                    <input type="text" class="builder-input" placeholder="Enter gadget pattern (e.g., 'pop rdi')">
+                    <button class="builder-btn">Search</button>
+                    <div class="builder-gadgets">
+                        <div class="gadget">
+                            <div class="gadget-address">0x40123a:</div>
+                            <div class="gadget-instruction">pop rdi ; ret</div>
+                        </div>
+                        <div class="gadget">
+                            <div class="gadget-address">0x40124b:</div>
+                            <div class="gadget-instruction">pop rsi ; pop r15 ; ret</div>
+                        </div>
+                        <div class="gadget">
+                            <div class="gadget-address">0x40125c:</div>
+                            <div class="gadget-instruction">pop rdx ; ret</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="builder-section">
+                    <div class="builder-section-title">Current Chain</div>
+                    <div class="builder-chain">
+                        <div class="chain-item">
+                            <div class="chain-addr">0x7fffffffd508</div>
+                            <div class="chain-content">pop rdi ; ret</div>
+                            <div class="chain-type gadget">gadget</div>
+                            <button class="chain-remove">×</button>
+                        </div>
+                        <div class="chain-item">
+                            <div class="chain-addr">0x7fffffffd510</div>
+                            <div class="chain-content">0x4141414141414141</div>
+                            <div class="chain-type param">param</div>
+                            <button class="chain-remove">×</button>
+                        </div>
+                        <div class="chain-item">
+                            <div class="chain-addr">0x7fffffffd518</div>
+                            <div class="chain-content">pop rsi ; pop r15 ; ret</div>
+                            <div class="chain-type gadget">gadget</div>
+                            <button class="chain-remove">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="ropgadget">
+            <h2>ROPGadget Component</h2>
+            <p>The <code>ROPGadget</code> class encapsulates individual code segments and provides comprehensive metadata.</p>
+
+            <pre data-language="python"><code>class ROPGadget:
+    """Represents a single ROP gadget with its address, instructions, and metadata."""
+    
+    def __init__(self, address, instructions, bytes_sequence):
+        self.address = address
+        self.instructions = instructions
+        self.bytes = bytes_sequence
+        self.size = len(bytes_sequence)
+        
+        # Extract registers modified by this gadget
+        self.modified_regs = self._extract_modified_regs()
+        
+        # Extract registers read by this gadget
+        self.read_regs = self._extract_read_regs()
+        
+    def _extract_modified_regs(self):
+        """Extract registers that are modified by this gadget."""
+        modified = set()
+        reg_pattern = r'(rax|rbx|rcx|rdx|rsi|rdi|rbp|rsp|r8|r9|r10|r11|r12|r13|r14|r15)'
+        
+        for instr in self.instructions:
+            if 'pop' in instr:
+                match = re.search(r'pop (%s)' % reg_pattern, instr)
+                if match:
+                    modified.add(match.group(1))
+            elif 'mov' in instr:
+                match = re.search(r'mov (%s),' % reg_pattern, instr)
+                if match:
+                    modified.add(match.group(1))
+                    
+        return modified</code></pre>
+
+            <h3>Key Features</h3>
+            <ul>
+                <li>Automatic register tracking (modified and read)</li>
+                <li>Instruction sequence parsing and analysis</li>
+                <li>Binary representation with size calculation</li>
+                <li>Optimized string representation for visualization</li>
+            </ul>
+        </section>
+
+        <section id="ropchain">
+            <h2>ROPChain Component</h2>
+            <p>The <code>ROPChain</code> class manages the construction of ROP chains and payload generation.</p>
+
+            <pre data-language="python"><code>class ROPChain:
+    """Represents a ROP chain being constructed."""
+    
+    def __init__(self, architecture='x86_64'):
+        self.chain = []
+        self.architecture = architecture
+        self.stack_pointer_offset = 0
+        
+    def add_gadget(self, gadget, parameters=None):
+        """Add a gadget to the ROP chain with optional parameters."""
+        self.chain.append((gadget, parameters))
+        self.stack_pointer_offset += 8  # Address size for x64
+        
+        # Account for parameters that will be popped by the gadget
+        if parameters:
+            self.stack_pointer_offset += 8 * len(parameters)
+            
+    def generate_payload(self):
+        """Generate the final payload bytes for the ROP chain."""
+        payload = b''
+        
+        for item, params in self.chain:
+            if isinstance(item, ROPGadget):
+                payload += struct.pack('<Q', item.address)
+                if params:
+                    for param in params:
+                        if isinstance(param, int):
+                            payload += struct.pack('<Q', param)
+                        else:
+                            payload += param
+            elif isinstance(item, int):
+                payload += struct.pack('<Q', item)
+            else:
+                payload += item
+                
+        return payload</code></pre>
+
+            <h3>Key Features</h3>
+            <ul>
+                <li>Flexible chain construction with gadgets and parameters</li>
+                <li>Support for raw addresses and binary data</li>
+                <li>Precise stack offset tracking</li>
+                <li>Binary payload generation with correct endianness</li>
+                <li>Human-readable chain visualization</li>
+            </ul>
+        </section>
+
+        <section id="ropchainGenerator">
+            <h2>ROPChainGenerator Component</h2>
+            <p>The <code>ROPChainGenerator</code> class provides comprehensive binary analysis and gadget discovery functionality.</p>
+
+            <pre data-language="python"><code>class ROPChainGenerator:
+    """Main class for ROP chain generation and binary analysis."""
+    
+    def __init__(self, binary_path, max_gadget_size=5, min_gadget_size=1):
+        self.binary_path = binary_path
+        self.max_gadget_size = max_gadget_size
+        self.min_gadget_size = min_gadget_size
+        self.gadgets = []
+        self.gadget_by_instruction = defaultdict(list)
+        self.gadget_by_modified_reg = defaultdict(list)
+        self.binary_data = None
+        self.base_address = 0
+        self.text_section = None
+        self.plt_section = None
+        self.got_plt_section = None
+        self.libc_base = 0
+        self.libc_functions = {}
+        
+        # Load the binary
+        self._load_binary()
+        
+        # Find gadgets
+        self._find_gadgets()
+        
+        # Index gadgets
+        self._index_gadgets()</code></pre>
+
+            <h3>Key Features</h3>
+            <ul>
+                <li>ELF binary parsing and section analysis</li>
+                <li>Efficient gadget discovery algorithm</li>
+                <li>Multi-dimensional gadget indexing</li>
+                <li>Specialized search functions for common patterns</li>
+                <li>Pre-built chain templates for common exploits</li>
+            </ul>
+        </section>
+
+        <section id="exploitation-patterns">
+            <h2>Advanced Exploitation Patterns</h2>
+            <p>Beyond basic ROP chains, the framework supports advanced exploitation patterns for complex scenarios.</p>
+
+            <h3>Common Exploitation Patterns</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pattern</th>
+                        <th>Description</th>
+                        <th>Implementation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>execve Shell</td>
+                        <td>Execute arbitrary commands</td>
+                        <td>syscall 59 (execve)</td>
+                    </tr>
+                    <tr>
+                        <td>mprotect + shellcode</td>
+                        <td>Make memory region executable</td>
+                        <td>syscall 10 (mprotect) + shellcode</td>
+                    </tr>
+                    <tr>
+                        <td>Return-to-libc</td>
+                        <td>Chain library function calls</td>
+                        <td>Leverage linked functions</td>
+                    </tr>
+                    <tr>
+                        <td>Stack Pivoting</td>
+                        <td>Move stack pointer to controlled memory</td>
+                        <td>Manipulate RSP register</td>
+                    </tr>
+                    <tr>
+                        <td>SROP</td>
+                        <td>Sigreturn-oriented programming</td>
+                        <td>Leverage RT_SIGRETURN syscall</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <p>The framework's <code>suggest_chain_for_execve()</code> and <code>suggest_chain_for_mprotect()</code> methods automate construction of these common patterns.</p>
+            </div>
+        </section>
+
+        <section id="syscall-chains">
+            <h2>Syscall Chain Construction</h2>
+            <p>System calls provide a powerful interface for exploitation when properly leveraged in ROP chains.</p>
+
+            <pre data-language="python"><code>def suggest_chain_for_execve(self, command="/bin/sh"):
+    """Suggest a ROP chain for executing execve("/bin/sh", NULL, NULL)."""
+    chain = self.create_rop_chain()
+    
+    # Find gadgets for setting up syscall arguments
+    pop_rdi = self.find_gadgets_by_instruction('pop rdi')
+    pop_rsi = self.find_gadgets_by_instruction('pop rsi')
+    pop_rdx = self.find_gadgets_by_instruction('pop rdx')
+    syscall_gadgets = self.find_syscall_gadgets()
+    
+    if not pop_rdi or not pop_rsi or not pop_rdx or not syscall_gadgets:
+        print("[!] Missing required gadgets for execve syscall")
+        return None
+        
+    # Prepare string data for "/bin/sh"
+    command_bytes = command.encode() + b'\x00'
+    
+    # Building the payload structure
+    print("[*] Building execve ROP chain")
+    
+    # Find a location to store the command string
+    string_address = self.find_writeable_memory()
+    
+    # Set up registers for execve syscall
+    pop_rax = self.find_gadgets_by_instruction('pop rax')
+    chain.add_gadget(pop_rax[0], [59])  # execve syscall number
+    chain.add_gadget(pop_rdi[0], [string_address])
+    chain.add_gadget(pop_rsi[0], [0])
+    chain.add_gadget(pop_rdx[0], [0])
+    chain.add_gadget(syscall_gadgets[0])
+    
+    return chain</code></pre>
+
+            <div class="memory-diagram">
+                <div class="memory-block">
+                    <div class="memory-address">Syscall Number (rax)</div>
+                    <div class="memory-content">Function to execute (e.g., 59 for execve)</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">First Arg (rdi)</div>
+                    <div class="memory-content">First parameter (e.g., pointer to "/bin/sh")</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">Second Arg (rsi)</div>
+                    <div class="memory-content">Second parameter (e.g., argv)</div>
+                </div>
+                <div class="memory-block">
+                    <div class="memory-address">Third Arg (rdx)</div>
+                    <div class="memory-content">Third parameter (e.g., envp)</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="libc-manipulation">
+            <h2>Libc Manipulation Techniques</h2>
+            <p>Leveraging linked C libraries provides additional exploitation avenues, especially in systems with ASLR.</p>
+
+            <h3>GOT/PLT Redirection</h3>
+            <p>Procedure Linkage Table (PLT) and Global Offset Table (GOT) manipulation allows redirecting library function calls:</p>
+
+            <div class="gadget">
+                <div class="gadget-address">1. Find GOT entry:</div>
+                <div class="gadget-instruction">Locate GOT entry for target function (e.g., printf)</div>
+            </div>
+            <div class="gadget">
+                <div class="gadget-address">2. Write address:</div>
+                <div class="gadget-instruction">Use mov [reg], reg gadget to overwrite GOT entry</div>
+            </div>
+            <div class="gadget">
+                <div class="gadget-address">3. Trigger call:</div>
+                <div class="gadget-instruction">Call PLT entry for the overwritten function</div>
+            </div>
+
+            <div class="info-box">
+                <p>GOT overwrites provide a powerful technique for redirecting execution flow, especially when combined with partial RELRO protection.</p>
+            </div>
+        </section>
+
+        <section id="stack-pivoting">
+            <h2>Stack Pivoting Techniques</h2>
+            <p>When stack space is limited, stack pivoting techniques allow moving the stack pointer to a controlled memory region.</p>
+
+            <h3>Common Pivoting Gadgets</h3>
+            <div class="gadget">
+                <div class="gadget-address">0x40123a:</div>
+                <div class="gadget-instruction">mov rsp, rax ; ret</div>
+            </div>
+            <div class="gadget">
+                <div class="gadget-address">0x40124b:</div>
+                <div class="gadget-instruction">xchg rsp, rax ; ret</div>
+            </div>
+            <div class="gadget">
+                <div class="gadget-address">0x40125c:</div>
+                <div class="gadget-instruction">leave ; ret</div>
+            </div>
+
+            <div class="warning-box">
+                <p>Stack pivoting requires precise control over memory and careful planning to avoid crashes. Test thoroughly in controlled environments.</p>
+            </div>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-yellow"></div>
+                        <div class="dot dot-green"></div>
+                    </div>
+                    <div class="terminal-title">Terminal</div>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-prompt">python rop_chain_generator.py ./vulnapp -s "mov rsp" --stats</div>
+                    <div class="terminal-output">
+[*] Analyzing binary: ./vulnapp
+[*] Found 342 potential ret instructions
+[*] Found 1240 gadgets
+
+Found 3 gadgets matching 'mov rsp':
+0x00000000004015fb: mov rsp, rbp ; pop rbp ; ret
+0x0000000000401783: mov rsp, qword ptr [rdi + 8] ; ret
+0x00000000004016a2: mov rsp, rax ; ret
+
+=== Gadget Statistics ===
+Total gadgets found: 1240
+
+Top 10 instruction types:
+  mov       : 382
+  pop       : 245
+  ret       : 198
+  add       : 124
+  xor       : 98
+  sub       : 87
+  push      : 76
+  call      : 54
+  lea       : 43
+  test      : 38
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>ROP Chain Generator Framework - Enterprise Exploitation Architecture</p>
+            <p>For security research and educational purposes only.</p>
+        </div>
+    </main>
+
+    <script>
+        // This would normally contain JavaScript for the interactive elements
+        // Since this is a demonstration, we're keeping it minimal
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('ROP Chain Generator Documentation Loaded');
+        });
+    </script>
+</body>
+</html>
